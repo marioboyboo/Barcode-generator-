@@ -3,95 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickCode | Barcode Generator</title>
+    <title>Barcode Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            width: 100%;
+            max-width: 450px; /* Limits width on desktop */
+        }
+
+        h2 { margin-top: 0; color: #1a1a1a; }
+        p { color: #666; font-size: 0.9rem; }
+
+        .input-group {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: #007bff; }
+
+        .display-area {
+            background: #fdfdfd;
+            margin-top: 1.5rem;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Keeps large barcodes from breaking layout */
+        }
+
+        /* Makes the SVG scale down on small screens */
+        #barcode {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #error-msg {
+            color: #d93025;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .download-btn {
+            width: 100%;
+            margin-top: 1.5rem;
+            background-color: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .download-btn:active { transform: scale(0.98); }
+        .download-btn:hover { opacity: 0.9; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Barcode Generator</h2>
-    <p>Enter text or numbers to generate your barcode.</p>
+    <h2>Barcode Maker</h2>
+    <p>Generate and download barcodes instantly.</p>
     
     <div class="input-group">
-        <input type="text" id="barcodeValue" placeholder="e.g. 12345678" oninput="generateBarcode()">
+        <input type="text" id="barcodeValue" placeholder="Enter text or numbers" oninput="generateBarcode()">
         <select id="barcodeType" onchange="generateBarcode()">
-            <option value="CODE128">CODE128 (Standard)</option>
-            <option value="EAN13">EAN-13 (Retail)</option>
-            <option value="CODE39">CODE39</option>
-            <option value="ITF">ITF</option>
-            <option value="pharmacode">Pharmacode</option>
+            <option value="CODE128">CODE128 (Most Versatile)</option>
+            <option value="EAN13">EAN-13 (Needs 13 digits)</option>
+            <option value="CODE39">CODE39 (Letters/Numbers)</option>
+            <option value="ITF">ITF (Even numbers only)</option>
+            <option value="MSI">MSI</option>
         </select>
     </div>
 
     <div class="display-area">
         <svg id="barcode"></svg>
+        <div id="error-msg">Invalid data for this format.</div>
     </div>
 
     <button class="download-btn" onclick="downloadSVG()">Download SVG</button>
 </div>
 
-</body>
-</html>
-<style>
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f7f6;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-    }
-    .container {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        text-align: center;
-        width: 400px;
-    }
-    .input-group {
-        margin-bottom: 1.5rem;
-    }
-    input, select {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        box-sizing: border-box;
-    }
-    .display-area {
-        background: #fafafa;
-        padding: 20px;
-        border: 1px dashed #ccc;
-        border-radius: 8px;
-        min-height: 100px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .download-btn {
-        margin-top: 1.5rem;
-        background-color: #2c3e50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.3s;
-    }
-    .download-btn:hover {
-        background-color: #34495e;
-    }
-</style>
 <script>
     function generateBarcode() {
         const value = document.getElementById('barcodeValue').value;
         const format = document.getElementById('barcodeType').value;
+        const errorMsg = document.getElementById('error-msg');
+        const barcodeElement = document.getElementById('barcode');
 
         if (value.trim() === "") {
-            document.getElementById('barcode').innerHTML = "";
+            barcodeElement.style.display = "none";
+            errorMsg.style.display = "none";
             return;
         }
 
@@ -100,30 +141,46 @@
                 format: format,
                 lineColor: "#000",
                 width: 2,
-                height: 100,
-                displayValue: true
+                height: 80,
+                displayValue: true,
+                fontSize: 16,
+                // This ensures the generator throws an error if data is invalid
+                valid: function(valid) {
+                    if (valid) {
+                        barcodeElement.style.display = "block";
+                        errorMsg.style.display = "none";
+                    } else {
+                        throw new Error("Invalid");
+                    }
+                }
             });
         } catch (e) {
-            // Silently fail if the input doesn't match the format (e.g. EAN13 needs specific lengths)
+            barcodeElement.style.display = "none";
+            errorMsg.style.display = "block";
         }
     }
 
     function downloadSVG() {
         const svg = document.getElementById("barcode");
+        if (svg.style.display === "none") return;
+
         const svgData = new XMLSerializer().serializeToString(svg);
         const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
         const svgUrl = URL.createObjectURL(svgBlob);
         const downloadLink = document.createElement("a");
         downloadLink.href = svgUrl;
-        downloadLink.download = "barcode.svg";
+        downloadLink.download = `barcode-${Date.now()}.svg`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
     }
     
-    // Initialize with a default value
+    // Default starting value
     window.onload = () => {
-        document.getElementById('barcodeValue').value = "HELLO-WORLD";
+        document.getElementById('barcodeValue').value = "12345678";
         generateBarcode();
     };
 </script>
+
+</body>
+</html>
